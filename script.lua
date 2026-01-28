@@ -1,96 +1,86 @@
--- [[ DELTA TP HUB - VERSION AMÉLIORÉE ]] --
-local player = game.Players.LocalPlayer
-local char = player.Character or player.CharacterAdded:Wait()
+--[[
+    Script: Steal a Brainrot - Slap & Diamonds
+    Logic: Auto-Slap, Diamond Collector, Anti-AFK
+]]
 
-local ScreenGui = Instance.new("ScreenGui")
-local MainFrame = Instance.new("Frame")
-local Title = Instance.new("TextLabel")
-local TPButton = Instance.new("TextButton")
-local AntiButton = Instance.new("TextButton")
-local UICorner = Instance.new("UICorner")
+-- Libération de la mémoire si le script tourne déjà
+if _G.Running then _G.Running = false task.wait(0.5) end
+_G.Running = true
 
-ScreenGui.Name = "DeltaTPHub_V2"
-ScreenGui.Parent = game.CoreGui
-ScreenGui.ResetOnSpawn = false
+-- Initialisation de la Librairie (Interface)
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/7Yuro/Vape-V4-Roblox/main/CustomModules/KavoGUILibrary.lua"))()
+local Window = Library.CreateLib("Delta Executor - Steal a Brainrot", "Midnight")
 
-MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-MainFrame.Position = UDim2.new(0.5, -90, 0.4, 0)
-MainFrame.Size = UDim2.new(0, 180, 0, 140)
-MainFrame.Active = true
-MainFrame.Draggable = true
+-- Variables de contrôle
+local config = {
+    autoSlap = false,
+    autoCollect = false,
+    antiAfk = true,
+    slapSpeed = 0.1
+}
 
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
+-- Section Principale
+local Main = Window:NewTab("Main")
+local Section = Main:NewSection("Combat & Farm")
 
-Title.Parent = MainFrame
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.Text = "DELTA TP HUB"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.BackgroundTransparency = 1
-Title.Font = Enum.Font.GothamBold
-
-TPButton.Parent = MainFrame
-TPButton.Position = UDim2.new(0.1, 0, 0.35, 0)
-TPButton.Size = UDim2.new(0.8, 0, 0, 35)
-TPButton.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
-TPButton.Text = "TP TO BASE"
-TPButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-Instance.new("UICorner", TPButton)
-
-AntiButton.Parent = MainFrame
-AntiButton.Position = UDim2.new(0.1, 0, 0.7, 0)
-AntiButton.Size = UDim2.new(0.8, 0, 0, 35)
-AntiButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-AntiButton.Text = "ANTI-SCRIPT: OFF"
-AntiButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-Instance.new("UICorner", AntiButton)
-
--- FONCTION TP ULTRA DÉTECTION
-TPButton.MouseButton1Click:Connect(function()
-    local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    if not root then return end
-
-    local foundBase = nil
-
-    -- Méthode 1 : Cherche par valeur d'Owner (Propriétaire)
-    for _, v in pairs(game.Workspace:GetDescendants()) do
-        if (v:IsA("StringValue") or v:IsA("ObjectValue")) and v.Value == player.Name then
-            foundBase = v.Parent
-            break
-        end
-    end
-
-    -- Méthode 2 : Cherche par nom de dossier (Ex: "Taco Base")
-    if not foundBase then
-        for _, v in pairs(game.Workspace:GetChildren()) do
-            if v.Name:find(player.Name) or (v:FindFirstChild("Owner") and v.Owner.Value == player.Name) then
-                foundBase = v
-                break
+-- Toggle pour le Slap Automatique
+Section:NewToggle("Auto Slap (Frapper)", "Frappe en boucle même avec un objet", function(state)
+    config.autoSlap = state
+    task.spawn(function()
+        while config.autoSlap and _G.Running do
+            -- On simule l'activation de l'outil de Slap
+            local char = game.Players.LocalPlayer.Character
+            if char then
+                local tool = char:FindFirstChildOfClass("Tool") or game.Players.LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
+                if tool then
+                    tool:Activate() -- Tape même si tu tiens un brainrot
+                end
             end
+            task.wait(config.slapSpeed)
         end
-    end
-
-    if foundBase then
-        -- Téléporte au centre de la base ou sur un objet spécifique
-        local targetPos = foundBase:GetModelCFrame() or foundBase.CFrame
-        root.CFrame = targetPos + Vector3.new(0, 10, 0)
-    else
-        print("Erreur : Ta base n'a pas été trouvée. Réessaie près de ta base.")
-    end
+    end)
 end)
 
--- ANTI-SCRIPT
-local antiActive = false
-AntiButton.MouseButton1Click:Connect(function()
-    antiActive = not antiActive
-    AntiButton.Text = antiActive and "ANTI-SCRIPT: ON" or "ANTI-SCRIPT: OFF"
-    AntiButton.BackgroundColor3 = antiActive and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
-end)
-
-game:GetService("RunService").Heartbeat:Connect(function()
-    if antiActive then
-        for _, obj in pairs(game.Workspace:GetChildren()) do
-            if obj:IsA("Explosion") then obj:Destroy() end
+-- Toggle pour les Diamants
+Section:NewToggle("Auto Diamond", "Ramasse les diamants automatiquement", function(state)
+    config.autoCollect = state
+    task.spawn(function()
+        while config.autoCollect and _G.Running do
+            -- Logique pour trouver les diamants (Parties nommées 'Diamond' ou 'Gem')
+            for _, v in pairs(game.Workspace:GetChildren()) do
+                if v.Name == "Diamond" or v:FindFirstChild("Diamond") then
+                    local char = game.Players.LocalPlayer.Character
+                    if char and char:FindFirstChild("HumanoidRootPart") then
+                        v.CFrame = char.HumanoidRootPart.CFrame -- Téléporte le diamant sur toi
+                    end
+                end
+            end
+            task.wait(0.5)
         end
-    end
+    end)
 end)
+
+-- Section Paramètres
+local Settings = Window:NewTab("Paramètres")
+local SetSection = Settings:NewSection("Système")
+
+SetSection:NewButton("Anti-AFK", "Empêche d'être kické", function()
+    local vu = game:GetService("VirtualUser")
+    game:GetService("Players").LocalPlayer.Idled:Connect(function()
+        vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        wait(1)
+        vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    end)
+    print("Anti-AFK activé")
+end)
+
+SetSection:NewSlider("Vitesse Slap", "Ajuste la vitesse de frappe", 0.5, 0.1, function(s)
+    config.slapSpeed = s
+end)
+
+-- Notification de chargement
+game.StarterGui:SetCore("SendNotification", {
+    Title = "Delta Script Loaded",
+    Text = "Steal a Brainrot prêt !",
+    Duration = 5
+})
