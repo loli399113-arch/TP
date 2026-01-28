@@ -1,90 +1,72 @@
---[[
-    SCRIPT: Steal a Brainrot - Ultimate Hub
-    STATUS: Stable for Delta Executor
-]]
+-- SCRIPT AUTO-SLAP & DIAMOND (Version Delta Stable)
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local SlapBtn = Instance.new("TextButton")
+local DiamBtn = Instance.new("TextButton")
 
--- Sécurité pour éviter les exécutions multiples
-if _G.MainLoaded then return end
-_G.MainLoaded = true
+-- Configuration de l'interface
+ScreenGui.Parent = game.CoreGui
+MainFrame.Name = "DeltaHub"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.Position = UDim2.new(0.5, -75, 0.5, -50)
+MainFrame.Size = UDim2.new(0, 150, 0, 180)
+MainFrame.Active = true
+MainFrame.Draggable = true -- Tu peux le déplacer sur ton écran
 
--- Initialisation de la Librairie (Kavo UI - Très stable sur Delta)
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("Delta Brainrot V2", "DarkScene")
+Title.Parent = MainFrame
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.Text = "BRAINROT HUB"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 
--- --- VARIABLES ---
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local RunService = game:GetService("RunService")
-local config = {
-    slap = false,
-    farm = false,
-    speed = 0.1
-}
+-- BOUTON SLAP
+SlapBtn.Parent = MainFrame
+SlapBtn.Position = UDim2.new(0, 10, 0, 50)
+SlapBtn.Size = UDim2.new(0, 130, 0, 40)
+SlapBtn.Text = "Auto-Slap: OFF"
+SlapBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
 
--- --- FONCTIONS ---
-local function getTool()
-    return LocalPlayer.Character:FindFirstChildOfClass("Tool") or LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
-end
-
--- --- PAGES ---
-local MainTab = Window:NewTab("Main")
-local Section = MainTab:NewSection("Auto Farm")
-
--- Toggle Auto Slap
-Section:NewToggle("Auto Slap (Même avec Brainrot)", "Tape en boucle", function(state)
-    config.slap = state
+local slapping = false
+SlapBtn.MouseButton1Click:Connect(function()
+    slapping = not slapping
+    SlapBtn.Text = slapping and "Auto-Slap: ON" or "Auto-Slap: OFF"
+    SlapBtn.BackgroundColor3 = slapping and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+    
     task.spawn(function()
-        while config.slap do
-            local tool = getTool()
+        while slapping do
+            local p = game.Players.LocalPlayer
+            local tool = p.Character and p.Character:FindFirstChildOfClass("Tool") or p.Backpack:FindFirstChildOfClass("Tool")
             if tool then
-                tool:Activate() -- Action de base
-                -- Force l'attaque même si l'animation est bloquée
-                local remote = tool:FindFirstChildOfClass("RemoteEvent")
-                if remote then
-                    remote:FireServer()
-                end
+                tool:Activate() -- Tape même avec un objet
             end
-            task.wait(config.speed)
+            task.wait(0.1)
         end
     end)
 end)
 
--- Toggle Auto Diamants
-Section:NewToggle("Auto Diamonds", "Récupère les diamants proches", function(state)
-    config.farm = state
+-- BOUTON DIAMANTS
+DiamBtn.Parent = MainFrame
+DiamBtn.Position = UDim2.new(0, 10, 0, 110)
+DiamBtn.Size = UDim2.new(0, 130, 0, 40)
+DiamBtn.Text = "Auto-Diamond: OFF"
+DiamBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+
+local farming = false
+DiamBtn.MouseButton1Click:Connect(function()
+    farming = not farming
+    DiamBtn.Text = farming and "Auto-Diamond: ON" or "Auto-Diamond: OFF"
+    DiamBtn.BackgroundColor3 = farming and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+    
     task.spawn(function()
-        while config.farm do
-            for _, obj in pairs(workspace:GetChildren()) do
-                if obj.Name:lower():find("diamond") or obj.Name:lower():find("gem") then
-                    if obj:IsA("BasePart") and LocalPlayer.Character then
-                        local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                        if hrp then
-                            obj.CFrame = hrp.CFrame
-                        end
-                    end
+        while farming do
+            for _, v in pairs(workspace:GetChildren()) do
+                if v.Name:lower():find("diamond") and v:IsA("BasePart") then
+                    v.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
                 end
             end
             task.wait(1)
         end
     end)
 end)
-
--- Paramètres
-local SettingsTab = Window:NewTab("Paramètres")
-local SetSection = SettingsTab:NewSection("Réglages")
-
-SetSection:NewSlider("Vitesse de frappe", "Plus bas = Plus rapide", 0.5, 0.01, function(s)
-    config.speed = s
-end)
-
-SetSection:NewButton("Anti-AFK (Anti-Kick)", "Évite d'être viré du jeu", function()
-    local vu = game:GetService("VirtualUser")
-    LocalPlayer.Idled:Connect(function()
-        vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-        task.wait(1)
-        vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-    end)
-end)
-
--- Notif de fin de chargement
-Library:Notify("Script Ready", "Le menu Delta est prêt !")
