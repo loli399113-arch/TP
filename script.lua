@@ -1,106 +1,79 @@
 --[[
-    ULTIMATE BRAINROT BYPASS - FORCE SLAP
-    Ce script force l'envoi du signal de frappe au serveur.
+    STEAL A BRAINROT - VERSION DIAMOND SLAP ULTRA
+    - Frappe sans équiper le gant
+    - Frappe même en portant un objet (Brainrot)
+    - GUI inclus (Pas de liens externes)
 ]]
 
-if game.CoreGui:FindFirstChild("BrainrotHub") then
-    game.CoreGui.BrainrotHub:Destroy()
+-- Supprimer l'ancien GUI s'il existe
+if game.CoreGui:FindFirstChild("DiamondHub") then
+    game.CoreGui.DiamondHub:Destroy()
 end
 
+-- --- CRÉATION DU GUI ---
 local ScreenGui = Instance.new("ScreenGui")
 local Main = Instance.new("Frame")
 local Title = Instance.new("TextLabel")
-local Container = Instance.new("ScrollingFrame")
-local UIListLayout = Instance.new("UIListLayout")
+local ToggleBtn = Instance.new("TextButton")
 
-ScreenGui.Name = "BrainrotHub"
+ScreenGui.Name = "DiamondHub"
 ScreenGui.Parent = game.CoreGui
+
 Main.Name = "Main"
 Main.Parent = ScreenGui
-Main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-Main.Position = UDim2.new(0.3, 0, 0.3, 0)
-Main.Size = UDim2.new(0, 220, 0, 280)
+Main.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+Main.BorderSizePixel = 0
+Main.Position = UDim2.new(0.5, -100, 0.5, -60)
+Main.Size = UDim2.new(0, 200, 0, 120)
 Main.Active = true
-Main.Draggable = true
+Main.Draggable = true -- Tu peux le déplacer sur ton écran
 
 Title.Parent = Main
-Title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-Title.Size = UDim2.new(1, 0, 0, 35)
-Title.Text = "BRAINROT BYPASS V5"
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+Title.Text = "Diamond Slap Helper"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
 
-Container.Parent = Main
-Container.Position = UDim2.new(0, 5, 0, 40)
-Container.Size = UDim2.new(0, 210, 0, 230)
-Container.BackgroundTransparency = 1
-UIListLayout.Parent = Container
-UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-UIListLayout.Padding = UDim.new(0, 8)
+ToggleBtn.Parent = Main
+ToggleBtn.Position = UDim2.new(0, 10, 0, 50)
+ToggleBtn.Size = UDim2.new(0, 180, 0, 50)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+ToggleBtn.Text = "Auto-Slap: OFF"
+ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleBtn.Font = Enum.Font.Gotham
 
-local function createToggle(name, callback)
-    local btn = Instance.new("TextButton")
-    local enabled = false
-    btn.Parent = Container
-    btn.Size = UDim2.new(0, 190, 0, 40)
-    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    btn.Text = name .. ": OFF"
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Font = Enum.Font.Gotham
-    btn.MouseButton1Click:Connect(function()
-        enabled = not enabled
-        btn.BackgroundColor3 = enabled and Color3.fromRGB(0, 200, 80) or Color3.fromRGB(60, 60, 60)
-        btn.Text = name .. (enabled and ": ON" or ": OFF")
-        callback(enabled)
-    end)
-end
+-- --- LOGIQUE DE FRAPPE ---
+local autoSlap = false
 
--- --- LA LOGIQUE DE BYPASS ---
-local forceSlap = false
-createToggle("Force Slap (Bypass)", function(state)
-    forceSlap = state
+ToggleBtn.MouseButton1Click:Connect(function()
+    autoSlap = not autoSlap
+    ToggleBtn.Text = autoSlap and "Auto-Slap: ON" or "Auto-Slap: OFF"
+    ToggleBtn.BackgroundColor3 = autoSlap and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+    
     task.spawn(function()
-        while forceSlap do
+        while autoSlap do
             local player = game.Players.LocalPlayer
-            local char = player.Character
+            -- On cherche le gant Diamond Slap dans ton sac à dos ou sur toi
+            local tool = player.Backpack:FindFirstChild("Diamond Slap") or (player.Character and player.Character:FindFirstChild("Diamond Slap"))
             
-            -- On cherche le gant dans le sac ou sur le perso
-            local tool = player.Backpack:FindFirstChild("Diamond Slap") or char:FindFirstChild("Diamond Slap") 
-            or player.Backpack:FindFirstChildOfClass("Tool") or char:FindFirstChildOfClass("Tool")
-
             if tool then
-                -- TECHNIQUE 1: Activation forcée
-                tool:Activate()
+                -- On cherche l'événement "Remote" qui dit au serveur de frapper
+                -- Cette méthode ne nécessite PAS d'avoir le gant dans les mains
+                local remote = tool:FindFirstChildOfClass("RemoteEvent") or tool:FindFirstChild("Remote") or tool:FindFirstChild("Event")
                 
-                -- TECHNIQUE 2: Remote Bypass (C'est ça qui fait que ça tape quand tu portes un objet)
-                -- On cherche l'événement qui dit au serveur "J'ai frappé"
-                for _, v in pairs(tool:GetDescendants()) do
-                    if v:IsA("RemoteEvent") or v:IsA("BindableEvent") then
-                        -- On envoie le signal sans que l'animation ait besoin de se jouer
-                        v:FireServer() 
-                    end
+                if remote then
+                    remote:FireServer()
                 end
             end
-            task.wait(0.01) -- Vitesse de frappe maximale
+            task.wait(0.1) -- Vitesse de frappe (0.1 seconde)
         end
     end)
 end)
 
--- --- AUTO COLLECT DIAMONDS ---
-local autoDiam = false
-createToggle("Auto Collect Gems", function(state)
-    autoDiam = state
-    task.spawn(function()
-        while autoDiam do
-            local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if (v.Name == "Diamond" or v.Name == "Gem") and v:IsA("BasePart") then
-                        v.CFrame = hrp.CFrame
-                    end
-                end
-            end
-            task.wait(0.5)
-        end
-    end)
-end)
+-- Notification
+game.StarterGui:SetCore("SendNotification", {
+    Title = "Script Chargé",
+    Text = "Diamond Slap Auto prêt !",
+    Duration = 5
+})
