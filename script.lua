@@ -1,57 +1,72 @@
 --[[
-    Script: Steal a Brainrot - Slap & Diamonds
-    Logic: Auto-Slap, Diamond Collector, Anti-AFK
+    AUTEUR: Delta User
+    JEU: Steal a Brainrot
+    FONCTION: Auto-Slap (Keep slapping while holding), Diamond Farm, GUI
 ]]
 
--- Libération de la mémoire si le script tourne déjà
-if _G.Running then _G.Running = false task.wait(0.5) end
-_G.Running = true
+-- Nettoyage des anciens lancements
+if _G.Executed then _G.Executed = false task.wait(0.5) end
+_G.Executed = true
 
--- Initialisation de la Librairie (Interface)
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/7Yuro/Vape-V4-Roblox/main/CustomModules/KavoGUILibrary.lua"))()
-local Window = Library.CreateLib("Delta Executor - Steal a Brainrot", "Midnight")
+-- Importation de la Librairie GUI (Venyx UI est très fluide sur Mobile/Delta)
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/StepBroFurious/Script/main/VenyxLib.lua"))()
+local Window = Library.new("Delta Brainrot Hub", 5013109572)
 
--- Variables de contrôle
-local config = {
-    autoSlap = false,
-    autoCollect = false,
-    antiAfk = true,
-    slapSpeed = 0.1
+-- Thèmes
+local Themes = {
+    Background = Color3.fromRGB(24, 24, 24),
+    Accent = Color3.fromRGB(0, 255, 120)
 }
 
--- Section Principale
-local Main = Window:NewTab("Main")
-local Section = Main:NewSection("Combat & Farm")
+-- Pages
+local Main = Window:Page("Main")
+local Settings = Window:Page("Settings")
 
--- Toggle pour le Slap Automatique
-Section:NewToggle("Auto Slap (Frapper)", "Frappe en boucle même avec un objet", function(state)
-    config.autoSlap = state
+-- Section Combat
+local Combat = Main:Section("Combat & Slap")
+
+local autoSlap = false
+Combat:Toggle("Auto Slap (Always On)", function(state)
+    autoSlap = state
     task.spawn(function()
-        while config.autoSlap and _G.Running do
-            -- On simule l'activation de l'outil de Slap
-            local char = game.Players.LocalPlayer.Character
+        while autoSlap and _G.Executed do
+            local player = game.Players.LocalPlayer
+            local char = player.Character
+            
             if char then
-                local tool = char:FindFirstChildOfClass("Tool") or game.Players.LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
+                -- Cherche l'outil dans la main ou le sac
+                local tool = char:FindFirstChildOfClass("Tool") or player.Backpack:FindFirstChildOfClass("Tool")
+                
                 if tool then
-                    tool:Activate() -- Tape même si tu tiens un brainrot
+                    -- Force l'activation même si on porte un Brainrot
+                    tool:Activate()
+                    -- Optionnel : Simule un clic pour certains jeux qui ignorent Activate()
+                    local remote = tool:FindFirstChild("Remote") or tool:FindFirstChild("Event")
+                    if remote and remote:IsA("RemoteEvent") then
+                        remote:FireServer()
+                    end
                 end
             end
-            task.wait(config.slapSpeed)
+            task.wait(0.05) -- Vitesse ultra rapide
         end
     end)
 end)
 
--- Toggle pour les Diamants
-Section:NewToggle("Auto Diamond", "Ramasse les diamants automatiquement", function(state)
-    config.autoCollect = state
+-- Section Farm
+local Farm = Main:Section("Farm Diamants")
+
+local autoDiamond = false
+Farm:Toggle("Auto-Collect Diamonds", function(state)
+    autoDiamond = state
     task.spawn(function()
-        while config.autoCollect and _G.Running do
-            -- Logique pour trouver les diamants (Parties nommées 'Diamond' ou 'Gem')
-            for _, v in pairs(game.Workspace:GetChildren()) do
-                if v.Name == "Diamond" or v:FindFirstChild("Diamond") then
-                    local char = game.Players.LocalPlayer.Character
-                    if char and char:FindFirstChild("HumanoidRootPart") then
-                        v.CFrame = char.HumanoidRootPart.CFrame -- Téléporte le diamant sur toi
+        while autoDiamond and _G.Executed do
+            -- Recherche des diamants dans le Workspace
+            for _, obj in pairs(game.Workspace:GetChildren()) do
+                if obj.Name:lower():find("diamond") or obj.Name:lower():find("gem") then
+                    local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if hrp and obj:IsA("BasePart") then
+                        -- Téléporte le diamant à toi ou toi au diamant
+                        obj.CFrame = hrp.CFrame
                     end
                 end
             end
@@ -60,27 +75,27 @@ Section:NewToggle("Auto Diamond", "Ramasse les diamants automatiquement", functi
     end)
 end)
 
--- Section Paramètres
-local Settings = Window:NewTab("Paramètres")
-local SetSection = Settings:NewSection("Système")
+-- Section Système
+local Misc = Settings:Section("Système")
 
-SetSection:NewButton("Anti-AFK", "Empêche d'être kické", function()
+Misc:Button("Anti-AFK", function()
     local vu = game:GetService("VirtualUser")
     game:GetService("Players").LocalPlayer.Idled:Connect(function()
         vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-        wait(1)
+        task.wait(1)
         vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
     end)
-    print("Anti-AFK activé")
+    print("Anti-AFK activé !")
 end)
 
-SetSection:NewSlider("Vitesse Slap", "Ajuste la vitesse de frappe", 0.5, 0.1, function(s)
-    config.slapSpeed = s
+Misc:Button("Destroy UI", function()
+    _G.Executed = false
+    game.CoreGui:FindFirstChild("Delta Brainrot Hub"):Destroy()
 end)
 
--- Notification de chargement
+-- Notification de succès
 game.StarterGui:SetCore("SendNotification", {
-    Title = "Delta Script Loaded",
-    Text = "Steal a Brainrot prêt !",
+    Title = "Delta Hub",
+    Text = "Script chargé avec succès !",
     Duration = 5
 })
