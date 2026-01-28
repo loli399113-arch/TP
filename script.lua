@@ -1,72 +1,132 @@
--- SCRIPT AUTO-SLAP & DIAMOND (Version Delta Stable)
+--[[
+    STEAL A BRAINROT - ULTIMATE DELTA HUB
+    Lien: https://raw.githubusercontent.com/loli399113-arch/TP/refs/heads/main/script.lua
+]]
+
+-- Sécurité pour ne pas lancer le script 2 fois
+if game.CoreGui:FindFirstChild("BrainrotHub") then
+    game.CoreGui.BrainrotHub:Destroy()
+end
+
+-- CRÉATION DU GUI (SANS LIBRAIRIE EXTERNE POUR ÉVITER LES CRASHS)
 local ScreenGui = Instance.new("ScreenGui")
-local MainFrame = Instance.new("Frame")
+local Main = Instance.new("Frame")
 local Title = Instance.new("TextLabel")
-local SlapBtn = Instance.new("TextButton")
-local DiamBtn = Instance.new("TextButton")
+local Container = Instance.new("ScrollingFrame")
+local UIListLayout = Instance.new("UIListLayout")
 
--- Configuration de l'interface
+ScreenGui.Name = "BrainrotHub"
 ScreenGui.Parent = game.CoreGui
-MainFrame.Name = "DeltaHub"
-MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-MainFrame.Position = UDim2.new(0.5, -75, 0.5, -50)
-MainFrame.Size = UDim2.new(0, 150, 0, 180)
-MainFrame.Active = true
-MainFrame.Draggable = true -- Tu peux le déplacer sur ton écran
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-Title.Parent = MainFrame
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.Text = "BRAINROT HUB"
+Main.Name = "Main"
+Main.Parent = ScreenGui
+Main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Main.BorderSizePixel = 0
+Main.Position = UDim2.new(0.3, 0, 0.3, 0)
+Main.Size = UDim2.new(0, 220, 0, 280)
+Main.Active = true
+Main.Draggable = true -- Tu peux le bouger sur Mobile
+
+Title.Name = "Title"
+Title.Parent = Main
+Title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+Title.Size = UDim2.new(1, 0, 0, 35)
+Title.Font = Enum.Font.GothamBold
+Title.Text = "BRAINROT V3 (DELTA)"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+Title.TextSize = 14
 
--- BOUTON SLAP
-SlapBtn.Parent = MainFrame
-SlapBtn.Position = UDim2.new(0, 10, 0, 50)
-SlapBtn.Size = UDim2.new(0, 130, 0, 40)
-SlapBtn.Text = "Auto-Slap: OFF"
-SlapBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+Container.Name = "Container"
+Container.Parent = Main
+Container.BackgroundTransparency = 1
+Container.Position = UDim2.new(0, 5, 0, 40)
+Container.Size = UDim2.new(0, 210, 0, 230)
+Container.CanvasSize = UDim2.new(0, 0, 1.5, 0)
+Container.ScrollBarThickness = 4
 
-local slapping = false
-SlapBtn.MouseButton1Click:Connect(function()
-    slapping = not slapping
-    SlapBtn.Text = slapping and "Auto-Slap: ON" or "Auto-Slap: OFF"
-    SlapBtn.BackgroundColor3 = slapping and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
+UIListLayout.Parent = Container
+UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+UIListLayout.Padding = UDim.new(0, 8)
+
+-- FONCTION POUR CRÉER DES BOUTONS (TOGGLES)
+local function createToggle(name, callback)
+    local btn = Instance.new("TextButton")
+    local enabled = false
     
-    task.spawn(function()
-        while slapping do
-            local p = game.Players.LocalPlayer
-            local tool = p.Character and p.Character:FindFirstChildOfClass("Tool") or p.Backpack:FindFirstChildOfClass("Tool")
-            if tool then
-                tool:Activate() -- Tape même avec un objet
-            end
-            task.wait(0.1)
-        end
+    btn.Name = name
+    btn.Parent = Container
+    btn.Size = UDim2.new(0, 190, 0, 40)
+    btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    btn.Font = Enum.Font.Gotham
+    btn.Text = name .. ": OFF"
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextSize = 14
+    
+    btn.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        btn.BackgroundColor3 = enabled and Color3.fromRGB(0, 180, 50) or Color3.fromRGB(50, 50, 50)
+        btn.Text = name .. (enabled and ": ON" or ": OFF")
+        callback(enabled)
     end)
-end)
+end
 
--- BOUTON DIAMANTS
-DiamBtn.Parent = MainFrame
-DiamBtn.Position = UDim2.new(0, 10, 0, 110)
-DiamBtn.Size = UDim2.new(0, 130, 0, 40)
-DiamBtn.Text = "Auto-Diamond: OFF"
-DiamBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+-- --- LOGIQUE DES CHEATS ---
 
-local farming = false
-DiamBtn.MouseButton1Click:Connect(function()
-    farming = not farming
-    DiamBtn.Text = farming and "Auto-Diamond: ON" or "Auto-Diamond: OFF"
-    DiamBtn.BackgroundColor3 = farming and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
-    
-    task.spawn(function()
-        while farming do
-            for _, v in pairs(workspace:GetChildren()) do
-                if v.Name:lower():find("diamond") and v:IsA("BasePart") then
-                    v.CFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+-- 1. AUTO SLAP (FONCTIONNE MÊME AVEC OBJET)
+local slapLoop = nil
+createToggle("Auto Slap Fast", function(state)
+    if state then
+        slapLoop = task.spawn(function()
+            while true do
+                local char = game.Players.LocalPlayer.Character
+                -- On cherche l'outil dans le perso OU l'inventaire
+                local tool = char:FindFirstChildOfClass("Tool") or game.Players.LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
+                if tool then
+                    tool:Activate() -- Tape
                 end
+                task.wait(0.05) -- Vitesse Max
             end
-            task.wait(1)
-        end
-    end)
+        end)
+    else
+        if slapLoop then task.cancel(slapLoop) end
+    end
 end)
+
+-- 2. AUTO DIAMONDS (TP LES DIAMANTS SUR TOI)
+local diamLoop = nil
+createToggle("Auto Diamonds", function(state)
+    if state then
+        diamLoop = task.spawn(function()
+            while true do
+                local hrp = game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    for _, v in pairs(workspace:GetChildren()) do
+                        if v.Name:lower():find("diamond") or v.Name:lower():find("gem") then
+                            if v:IsA("BasePart") then
+                                v.CFrame = hrp.CFrame
+                            end
+                        end
+                    end
+                end
+                task.wait(0.5)
+            end
+        end)
+    else
+        if diamLoop then task.cancel(diamLoop) end
+    end
+end)
+
+-- 3. ANTI-AFK
+createToggle("Anti-AFK", function(state)
+    if state then
+        local vu = game:GetService("VirtualUser")
+        game:GetService("Players").LocalPlayer.Idled:Connect(function()
+            vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+            task.wait(1)
+            vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        end)
+    end
+end)
+
+print("Script chargé !")
