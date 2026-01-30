@@ -1,79 +1,78 @@
---[[
-    STEAL A BRAINROT - VERSION DIAMOND SLAP ULTRA
-    - Frappe sans équiper le gant
-    - Frappe même en portant un objet (Brainrot)
-    - GUI inclus (Pas de liens externes)
-]]
+-- Services
+local TweenService = game:GetService("TweenService")
+local Players = game.Players
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
 
--- Supprimer l'ancien GUI s'il existe
-if game.CoreGui:FindFirstChild("DiamondHub") then
-    game.CoreGui.DiamondHub:Destroy()
-end
+-- Création du ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "CustomMenu"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
 
--- --- CRÉATION DU GUI ---
-local ScreenGui = Instance.new("ScreenGui")
-local Main = Instance.new("Frame")
-local Title = Instance.new("TextLabel")
-local ToggleBtn = Instance.new("TextButton")
+-- Cadre Principal (Main Frame)
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 220, 0, 120)
+mainFrame.Position = UDim2.new(0.5, -110, 0.4, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true -- Permet de déplacer le menu
+mainFrame.Parent = screenGui
 
-ScreenGui.Name = "DiamondHub"
-ScreenGui.Parent = game.CoreGui
+-- Arrondir les coins
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 10)
+corner.Parent = mainFrame
 
-Main.Name = "Main"
-Main.Parent = ScreenGui
-Main.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-Main.BorderSizePixel = 0
-Main.Position = UDim2.new(0.5, -100, 0.5, -60)
-Main.Size = UDim2.new(0, 200, 0, 120)
-Main.Active = true
-Main.Draggable = true -- Tu peux le déplacer sur ton écran
+-- Titre
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 35)
+title.BackgroundTransparency = 1
+title.Text = "MENU PREMIUM"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextSize = 18
+title.Font = Enum.Font.GothamBold
+title.Parent = mainFrame
 
-Title.Parent = Main
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-Title.Text = "Diamond Slap Helper"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Font = Enum.Font.GothamBold
+-- Bouton Toggle
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Name = "ToggleBtn"
+toggleBtn.Size = UDim2.new(0, 180, 0, 45)
+toggleBtn.Position = UDim2.new(0, 20, 0, 50)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50) -- Rouge de base
+toggleBtn.Text = "GOD MODE: OFF"
+toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleBtn.Font = Enum.Font.GothamSemibold
+toggleBtn.TextSize = 14
+toggleBtn.AutoButtonColor = false
+toggleBtn.Parent = mainFrame
 
-ToggleBtn.Parent = Main
-ToggleBtn.Position = UDim2.new(0, 10, 0, 50)
-ToggleBtn.Size = UDim2.new(0, 180, 0, 50)
-ToggleBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-ToggleBtn.Text = "Auto-Slap: OFF"
-ToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleBtn.Font = Enum.Font.Gotham
+local btnCorner = Instance.new("UICorner")
+btnCorner.CornerRadius = UDim.new(0, 8)
+btnCorner.Parent = toggleBtn
 
--- --- LOGIQUE DE FRAPPE ---
-local autoSlap = false
+-- Logique de fonctionnement
+local isActive = false
 
-ToggleBtn.MouseButton1Click:Connect(function()
-    autoSlap = not autoSlap
-    ToggleBtn.Text = autoSlap and "Auto-Slap: ON" or "Auto-Slap: OFF"
-    ToggleBtn.BackgroundColor3 = autoSlap and Color3.fromRGB(50, 200, 50) or Color3.fromRGB(200, 50, 50)
-    
-    task.spawn(function()
-        while autoSlap do
-            local player = game.Players.LocalPlayer
-            -- On cherche le gant Diamond Slap dans ton sac à dos ou sur toi
-            local tool = player.Backpack:FindFirstChild("Diamond Slap") or (player.Character and player.Character:FindFirstChild("Diamond Slap"))
-            
-            if tool then
-                -- On cherche l'événement "Remote" qui dit au serveur de frapper
-                -- Cette méthode ne nécessite PAS d'avoir le gant dans les mains
-                local remote = tool:FindFirstChildOfClass("RemoteEvent") or tool:FindFirstChild("Remote") or tool:FindFirstChild("Event")
-                
-                if remote then
-                    remote:FireServer()
-                end
-            end
-            task.wait(0.1) -- Vitesse de frappe (0.1 seconde)
-        end
-    end)
+toggleBtn.MouseButton1Click:Connect(function()
+	isActive = not isActive
+	
+	-- Animation de couleur
+	local targetColor = isActive and Color3.fromRGB(50, 200, 100) or Color3.fromRGB(200, 50, 50)
+	local targetText = isActive and "GOD MODE: ON" or "GOD MODE: OFF"
+	
+	local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+	local tween = TweenService:Create(toggleBtn, tweenInfo, {BackgroundColor3 = targetColor})
+	
+	tween:Play()
+	toggleBtn.Text = targetText
+	
+	-- Action ici
+	if isActive then
+		print("Mode activé : Tu as maintenant le contrôle.")
+	else
+		print("Mode désactivé.")
+	end
 end)
-
--- Notification
-game.StarterGui:SetCore("SendNotification", {
-    Title = "Script Chargé",
-    Text = "Diamond Slap Auto prêt !",
-    Duration = 5
-})
